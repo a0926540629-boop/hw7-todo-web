@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>我的待辦事項</title>
+    <style>
+        body { font-family: sans-serif; max-width: 500px; margin: 50px auto; }
+        input { width: 70%; padding: 8px; }
+        button { padding: 8px 15px; }
+        li { margin: 10px 0; }
+        .done { text-decoration: line-through; color: gray; }
+    </style>
+</head>
+<body>
+    <h1>待辦事項</h1>
+    <input type="text" id="title" placeholder="輸入待辦事項">
+    <button onclick="addTodo()">新增</button>
+    <ul id="todo-list"></ul>
+
+    <script>
+        function loadTodos() {
+            fetch("/api/todos")
+                .then(function(res) { return res.json(); })
+                .then(function(todos) {
+                    var list = document.getElementById("todo-list");
+                    list.innerHTML = "";
+                    todos.forEach(function(t) {
+                        var li = document.createElement("li");
+                        if (t.done) li.className = "done";
+                        li.innerHTML = t.title
+                            + " <button onclick='doneTodo(" + t.id + ")'>完成</button>"
+                            + " <button onclick='delTodo(" + t.id + ")'>刪除</button>";
+                        list.appendChild(li);
+                    });
+                });
+        }
+
+        function addTodo() {
+            var input = document.getElementById("title");
+            fetch("/api/todos", {
+                method: "POST",
+                headers: {"Content-Type": "application/json"},
+                body: JSON.stringify({title: input.value})
+            }).then(function() {
+                input.value = "";
+                loadTodos();
+            });
+        }
+
+        function doneTodo(id) {
+            fetch("/api/todos/" + id + "/done", {method: "PUT"})
+                .then(function() { loadTodos(); });
+        }
+
+        function delTodo(id) {
+            fetch("/api/todos/" + id, {method: "DELETE"})
+                .then(function() { loadTodos(); });
+        }
+
+        loadTodos();
+    </script>
+</body>
+</html>
